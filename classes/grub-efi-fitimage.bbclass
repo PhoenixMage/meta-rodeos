@@ -1,7 +1,8 @@
-inherit kernel-fitimage logging
-require conf/image-uefi.conf
+DEPENDS:append = " u-boot-tools-native dtc-native"
 
-DEPENDS:append = " grub-efi u-boot-tools-native"
+UBOOT_MKIMAGE ?= "uboot-mkimage"
+UBOOT_MKIMAGE_DTCOPTS ??= ""
+
 
 # Description string
 FIT_DESC ?= "GRUB EFI fitImage for ${DISTRO_NAME}/${PV}/${MACHINE}"
@@ -32,24 +33,24 @@ fitimage_assemble() {
                         description = "Grub EFI";
                         data = /incbin/("grub-efi-${EFI_BOOT_IMAGE}");
                         type = "kernel_noload";
-                        arch = "${UBOOT_ARCH}";
+                        arch = "${GRUB_TARGET}";
                         os = "efi";
                         compression = "none";
                         load = <0>;
                         entry = <0>;
                         hash-1 {
-                                algo = "${FIT_HASH_ALG}";
+                                algo = "sha256";
                         };
                 };
                 fdt-${KERNEL_DEVICETREE_BASENAME} {
                         description = "Flattened Device Tree blob";
                         data = /incbin/("${KERNEL_DEVICETREE_BASENAME}");
                         type = "flat_dt";
-                        arch = "${UBOOT_ARCH}";
+                        arch = "${GRUB_TARGET}";
                         compression = "none";
                          
                         hash-1 {
-                                algo = "${FIT_HASH_ALG}";
+                                algo = "sha256";
                         };
                 };
         };
@@ -62,7 +63,7 @@ fitimage_assemble() {
                         fdt = "fdt-${KERNEL_DEVICETREE_BASENAME}"; 
                          
                         hash-1 {
-                                algo = "${FIT_HASH_ALG}";
+                                algo = "sha256";
                         };
                 };
         };
@@ -75,3 +76,5 @@ EOF
 		$2
 
 }
+
+addtask assemble_fitimage before do_package after do_deploy
